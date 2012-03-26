@@ -32,7 +32,7 @@ function fileBrowse() {
 
 // called when a file is added
 function fileQueued(fileObj) {
-	filesize = " (" + Math.round(fileObj.size/1024) + " kB) ";;
+	filesize = " (" + Math.round(fileObj.size/1024) + " kB) ";
 	jQuery("#txtFileName").val(fileObj.name);
 	jQuery("#uploadQueue")
 		.append("<div id='" + fileObj.id + "' class='nggUploadItem'> [<a href='javascript:removeFile(\"" + fileObj.id + "\");'>" + ngg_swf_upload.customSettings.remove + "</a>] " + fileObj.name + filesize + "</div>")

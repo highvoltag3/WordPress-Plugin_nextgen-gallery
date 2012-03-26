@@ -1,5 +1,5 @@
 /* 
-** NextGEN Gallery Style for Wordpress 3.0
+** NextGEN Gallery Style for Wordpress 3.3
 */
 
 /* SETTINGS FOR Overview Gallery */
@@ -143,11 +143,6 @@ p#ngg-inlinebutton {
 	top:-25pt;
 }
 
-.ngg-tablenav .button-secondary {
-	padding:2px 8px;
-	vertical-align: top;
-}
-
 .fixed tbody th.column-cb {
 	padding:7px 0 22px;
 }
@@ -248,6 +243,7 @@ div .groupItem
 	cursor: move;
 	width: 295px;
 	padding: 5px;
+    line-height: 1.5;
 }
 
 div .innerhandle {

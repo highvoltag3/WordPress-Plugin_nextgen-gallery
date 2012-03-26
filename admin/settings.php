@@ -129,7 +129,8 @@ class nggOptions {
 				return false;
 			});
             */
-			jQuery('#slider').tabs({ fxFade: true, fxSpeed: 'fast' });
+            jQuery('#slider').tabs({ fxFade: true, fxSpeed: 'fast' });
+			jQuery('#slider').css('display', 'block');            
             /*
 			jQuery('.picker').ColorPicker({
 				onSubmit: function(hsb, hex, rgb, el) {
@@ -180,7 +181,7 @@ class nggOptions {
 		};
 	</script>
 	
-	<div id="slider" class="wrap">
+	<div id="slider" class="wrap" style="display: none;">
         <ul id="tabs">
             <?php    
         	foreach($tabs as $tab_key => $tab_name) {
@@ -341,7 +342,7 @@ class nggOptions {
 		<h2><?php _e('Image settings','nggallery'); ?></h2>
 		<form name="imagesettings" method="POST" action="<?php echo $this->filepath.'#images'; ?>" >
 		<?php wp_nonce_field('ngg_settings') ?>
-		<input type="hidden" name="page_options" value="imgResize,imgWidth,imgHeight,imgQuality,imgBackup,imgAutoResize,imgCacheSinglePic" />
+		<input type="hidden" name="page_options" value="imgResize,imgWidth,imgHeight,imgQuality,imgBackup,imgAutoResize" />
 			<table class="form-table ngg-options">
 				<tr valign="top">
 					<th valign="top"><label for="fixratio"><?php _e('Resize Images','nggallery') ?></label></th>
@@ -365,11 +366,6 @@ class nggOptions {
 			</table>
 			<h3 class="expert"><?php _e('Single picture','nggallery') ?></h3>
 			<table class="expert form-table ngg-options">
-				<tr>
-					<th valign="top"><?php _e('Cache single pictures','nggallery'); ?></th>
-					<td><input <?php if (is_multisite()) echo 'readonly = "readonly"'; ?> type="checkbox" name="imgCacheSinglePic" value="1" <?php checked('1', $ngg->options['imgCacheSinglePic']); ?> />
-					<span class="setting-description"><?php _e('Creates a file for each singlepic settings. Reduce the CPU load','nggallery') ?></span></td>
-				</tr>
 				<tr>
 					<th valign="top"><?php _e('Clear cache folder','nggallery'); ?></th>
 					<td><input type="submit" name="clearcache" class="button-secondary"  value="<?php _e('Proceed now','nggallery') ;?> &raquo;"/></td>
@@ -508,7 +504,7 @@ class nggOptions {
         
         // take the first image as sample
         $imageID  = $wpdb->get_var("SELECT MIN(pid) FROM $wpdb->nggpictures");
-        $imageURL = ($imageID) ? $imageURL = '<img src="'. home_url() . '/' . 'index.php?callback=image&amp;pid=' . intval ($imageID) . '&amp;mode=watermark&amp;width=300&amp;height=250" />' : '';
+        $imageURL = ($imageID) ? $imageURL = '<img src="'. home_url('index.php') . '?callback=image&amp;pid=' . intval ($imageID) . '&amp;mode=watermark&amp;width=300&amp;height=250" />' : '';
 
 	?>
 	<!-- Watermark settings -->

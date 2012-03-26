@@ -159,7 +159,6 @@ function ngg_default_options() {
 	$ngg_options['imgWidth']			= 800;  						// Image Width
 	$ngg_options['imgHeight']			= 600;  						// Image height
 	$ngg_options['imgQuality']			= 85;							// Image Quality
-	$ngg_options['imgCacheSinglePic']	= true;							// Cached the singlepic	
 	$ngg_options['imgBackup']			= true;							// Create a backup
 	$ngg_options['imgAutoResize']		= false;						// Resize after upload
 	
@@ -234,7 +233,6 @@ function ngg_default_options() {
 		
 		$ngg_options['gallerypath']  		= str_replace("%BLOG_ID%", $blog_id , $ngg_wpmu_options['gallerypath']);
 		$ngg_options['CSSfile']				= $ngg_wpmu_options['wpmuCSSfile'];
-		$ngg_options['imgCacheSinglePic']	= true; 					// under WPMU this should be enabled
 	} 
 	
 	update_option('ngg_options', $ngg_options);

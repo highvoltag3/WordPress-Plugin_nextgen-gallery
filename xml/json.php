@@ -21,9 +21,9 @@ class nggAPI {
 	  */
     var $format		=	false;		// $_GET['format'] 	: Return a XML oder JSON output
 	var $api_key	=	false;		// $_GET['api_key']	: Protect the access via a random key (required if user is not logged into backend)
-	var $method		=	false;		// $_GET['method']	: search | gallery | image | tag | autocomplete
+	var $method		=	false;		// $_GET['method']	: search | gallery | image | album | tag | autocomplete
 	var $term		=	false;		// $_GET['term']   	: The search term (required for method search | tag)
-	var $id			=	false;		// $_GET['id']	  	: gallery or image id (required for method gallery | image)
+	var $id			=	false;		// $_GET['id']	  	: object id (required for method gallery | image | album )
 	var $limit		=	false;		// $_GET['limit']	: maximum of images which we request
     var $type		=	false;		// $_GET['type']	: gallery | image | album (required for method autocomplete)
     
@@ -84,6 +84,10 @@ class nggAPI {
 				//search for some images
 				$this->result['images'] = array_merge( (array) nggdb::search_for_images( $this->term ), (array) nggTags::find_images_for_tags( $this->term , 'ASC' ));
 			break;
+			case 'album' :
+				//search for some album  //TODO : Get images for each gallery, could end in a big db query
+				$this->result['album'] = nggdb::find_album( $this->id );
+			break;            
 			case 'gallery' :
 				//search for some gallery
 				$this->result['images'] = ($this->id == 0) ? nggdb::find_last_images( 0 , 100 ) : nggdb::get_gallery( $this->id, $ngg->options['galSort'], $ngg->options['galSortDir'], true, 0, 0, true );
@@ -223,24 +227,21 @@ class nggAPI {
      */
     function create_xml_array( &$arr )
     {
+        $xml = '';
+        
         if( is_object( $arr ) )
             $arr = get_object_vars( $arr );
 
         foreach( (array)$arr as $k => $v ) {
             if( is_object( $v ) )
                 $v = get_object_vars( $v );
-                
-            if( ! is_array( $v ) )
-                $xml .= "<$k>$v</$k>\n";
+            //nodes must contain letters   
+            if( is_numeric( $k ) )
+                $k = 'id-'.$k;                
+            if( is_array( $v ) )
+                $xml .= "<$k>\n". $this->create_xml_array( $v ). "</$k>\n";
             else
-            {
-                if( is_numeric( $k ) )
-                    $k = 'job';
-                    
-                $xml .= "<$k>\n";
-                $xml .= $this->create_xml_array( $v );
-                $xml .= "</$k>\n";
-            }
+                $xml .= "<$k>$v</$k>\n";
         }
         
         return $xml;

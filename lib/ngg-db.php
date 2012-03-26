@@ -145,6 +145,7 @@ class nggdb {
             $this->galleries[$key]->counter = 0;
             $this->galleries[$key]->title = stripslashes($this->galleries[$key]->title);
             $this->galleries[$key]->galdesc  = stripslashes($this->galleries[$key]->galdesc);
+			$this->galleries[$key]->abspath = WINABSPATH . $this->galleries[$key]->path;
             wp_cache_add($key, $this->galleries[$key], 'ngg_gallery');      
         }
 
@@ -161,7 +162,7 @@ class nggdb {
         // add the counter to the gallery objekt    
         foreach ($picturesCounter as $key => $value) {
             $this->galleries[$value->galleryid]->counter = $value->counter;
-            wp_cache_add($value->galleryid, $this->galleries[$value->galleryid], 'ngg_gallery');
+            wp_cache_set($value->galleryid, $this->galleries[$value->galleryid], 'ngg_gallery');
         }
         
         return $this->galleries;
@@ -252,7 +253,7 @@ class nggdb {
                 // due to a browser bug we need to remove the key for associative array for json request 
                 // (see http://code.google.com/p/chromium/issues/detail?id=883)
                 if ($json) $key = $i++;               
-                $gallery[$key] = new nggImage( $value ); // keep in my each request requery 8 - 16 kb memory usage
+                $gallery[$key] = new nggImage( $value ); // keep in mind each request require 8-16 kb memory usage
                 
             }
         }

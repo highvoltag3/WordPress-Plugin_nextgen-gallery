@@ -3,7 +3,7 @@
 * Class to produce Media RSS nodes
 * 
 * @author 		Vincent Prat
-* @copyright 	Copyright 2008
+* @copyright 	Copyright 2008-2011
 */
 class nggMediaRss {
 	
@@ -18,12 +18,10 @@ class nggMediaRss {
 	 * Add the javascript required to enable PicLens/CoolIris support 
 	 */
 	function add_piclens_javascript() {
-		echo "\n" . '<!-- NextGeEN Gallery CoolIris/PicLens support -->';
         if (is_ssl())
-		  echo "\n" . '<script type="text/javascript" src="https://lite.piclens.com/current/piclens_optimized.js"></script>';
+            wp_enqueue_script( 'piclens', 'https://lite.piclens.com/current/piclens_optimized.js', array(), false, true);
 		else
-            echo "\n" . '<script type="text/javascript" src="http://lite.piclens.com/current/piclens_optimized.js"></script>';
-        echo "\n" . '<!-- /NextGEN Gallery CoolIris/PicLens support -->';
+            wp_enqueue_script( 'piclens', 'http://lite.piclens.com/current/piclens_optimized.js', array(), false, true);
 	}
 	
 	/**

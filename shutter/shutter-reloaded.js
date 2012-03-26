@@ -1,7 +1,7 @@
 /*
 Shutter Reloaded for NextGEN Gallery
 http://www.laptoptips.ca/javascripts/shutter-reloaded/
-Version: 1.3.2
+Version: 1.3.3
 Copyright (C) 2007-2008  Andrew Ozz (Modification by Alex Rabe)
 Released under the GPL, http://www.gnu.org/copyleft/gpl.html
 
@@ -35,7 +35,10 @@ shutterReloaded = {
 		var t = this, L, T, ext, i, m, setid, inset, shfile, shMenuPre, k, img;
 		shutterLinks = {}, shutterSets = {};
 		if ( 'object' != typeof shutterSettings ) shutterSettings = {};
-
+        
+        // If the screen orientation is defined we are in a modern mobile OS
+        t.mobileOS = typeof orientation != 'undefined' ? true : false;
+                
 		for ( i = 0; i < document.links.length; i++ ) {
 			L = document.links[i];
 			ext = ( L.href.indexOf('?') == -1 ) ? L.href.slice(-4).toLowerCase() : L.href.substring( 0, L.href.indexOf('?') ).slice(-4).toLowerCase();
@@ -80,7 +83,12 @@ shutterReloaded = {
 		else t.FS = shutterSettings.FS || 0;
 
 		if ( t.resizing ) t.resizing = null;
-		window.onresize = new Function('shutterReloaded.resize("'+ln+'");');
+        
+        // resize event if window or orientation changed (i.e. iOS)
+        if(t.mobileOS == true)
+            window.onorientationchange = new Function('shutterReloaded.resize("'+ln+'");');
+        else
+            window.onresize = new Function('shutterReloaded.resize("'+ln+'");');
 
 		document.documentElement.style.overflowX = 'hidden';
 		if ( ! t.VP ) {
@@ -133,7 +141,7 @@ shutterReloaded = {
 		//Google Chrome 4.0.249.78 bug for onload attribute
 		document.getElementById('shTopImg').src = shutterLinks[ln].link;
 		
-		window.setTimeout(function(){shutterReloaded.loading();},2000);
+		window.setTimeout(function(){shutterReloaded.loading();},1000);
 	},
 
 	loading : function() {
@@ -144,6 +152,7 @@ shutterReloaded = {
 		WB = document.createElement('div');
 		WB.setAttribute('id','shWaitBar');
 		WB.style.top = t.Top + 'px';
+        WB.style.marginTop =(t.pgHeight/2) + 'px'
 		WB.innerHTML = t.msgLoading;
 		S.appendChild(WB);
 	},

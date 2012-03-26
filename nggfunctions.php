@@ -347,12 +347,12 @@ function nggCreateGallery($picturelist, $galleryID = false, $template = '', $ima
             $thumbcode = ($ngg_options['galImgBrowser']) ? '' : $picture->get_thumbcode(get_the_title());
 
         // create link for imagebrowser and other effects
-        $args ['nggpage'] = empty($nggpage) ? false : $nggpage;
+        $args ['nggpage'] = empty($nggpage) || ($template != 'carousel') ? false : $nggpage;  // only needed for carousel mode
         $args ['pid']     = ($ngg_options['usePermalinks']) ? $picture->image_slug : $picture->pid;
         $picturelist[$key]->pidlink = $nggRewrite->get_permalink( $args );
         
         // generate the thumbnail size if the meta data available
-        if (is_array ($size = $picturelist[$key]->meta_data['thumbnail']) )
+        if ( isset($picturelist[$key]->meta_data['thumbnail']) && is_array ($size = $picturelist[$key]->meta_data['thumbnail']) )
         	$thumbsize = 'width="' . $size['width'] . '" height="' . $size['height'] . '"';
         
         // choose link between imagebrowser or effect
@@ -406,9 +406,10 @@ function nggCreateGallery($picturelist, $galleryID = false, $template = '', $ima
  * @access public 
  * @param int | string $albumID
  * @param string (optional) $template
+ * @param string (optional) $gallery_template
  * @return the content
  */
-function nggShowAlbum($albumID, $template = 'extend') {
+function nggShowAlbum($albumID, $template = 'extend', $gallery_template = '') {
     
     // $_GET from wp_query
     $gallery  = get_query_var('gallery');
@@ -426,7 +427,7 @@ function nggShowAlbum($albumID, $template = 'extend') {
                 return;
                 
         // if gallery is submit , then show the gallery instead 
-        $out = nggShowGallery( $gallery );
+        $out = nggShowGallery( $gallery, $gallery_template );
         $GLOBALS['nggShowGallery'] = true;
         
         return $out;
@@ -447,6 +448,9 @@ function nggShowAlbum($albumID, $template = 'extend') {
     // still no success ? , die !
     if( !$album ) 
         return __('[Album not found]','nggallery');
+
+    // ensure to set the slug for "all" albums
+    $album->slug = ($albumID == 'all') ? $album->id : $album->slug;
     
     if ( is_array($album->gallery_ids) )
         $out = nggCreateAlbum( $album->gallery_ids, $template, $album );
@@ -515,10 +519,14 @@ function nggCreateAlbum( $galleriesID, $template = 'extend', $album = 0) {
             
             //populate the sub album values
             $galleries[$key]->counter = 0;
-            if ($subalbum->previewpic > 0)
+            $galleries[$key]->previewurl = '';
+            // ensure that album contain a preview image
+            if ($subalbum->previewpic > 0){
                 $image = $nggdb->find_image( $subalbum->previewpic );
-            $galleries[$key]->previewpic = $subalbum->previewpic;
-            $galleries[$key]->previewurl = isset($image->thumbURL) ? $image->thumbURL : '';
+				$galleries[$key]->previewurl = isset($image->thumbURL) ? $image->thumbURL : '';
+			}
+            
+            $galleries[$key]->previewpic = $subalbum->previewpic;            
             $galleries[$key]->previewname = $subalbum->name;
             
             //link to the subalbum
@@ -526,11 +534,7 @@ function nggCreateAlbum( $galleriesID, $template = 'extend', $album = 0) {
             $args['gallery'] = false; 
             $args['nggpage'] = false;
             $pageid = (isset($subalbum->pageid) ? $subalbum->pageid : 0);
-            if ($pageid > 0) {
-                $galleries[$key]->pagelink = get_permalink($pageid);
-            } else {
-                $galleries[$key]->pagelink = $nggRewrite->get_permalink($args);
-            }
+            $galleries[$key]->pagelink = ($pageid > 0) ? get_permalink($pageid) : $nggRewrite->get_permalink($args);
             $galleries[$key]->galdesc = html_entity_decode ( nggGallery::i18n($subalbum->albumdesc) );
             $galleries[$key]->title = html_entity_decode ( nggGallery::i18n($subalbum->name) ); 
             
@@ -543,7 +547,13 @@ function nggCreateAlbum( $galleriesID, $template = 'extend', $album = 0) {
 		// If a gallery is not found it should be ignored
         if (!$unsort_galleries[$key])
         	continue;
-		
+            
+		// No images found, set counter to 0
+        if (!isset($galleries[$key]->counter)){
+            $galleries[$key]->counter = 0;
+            $galleries[$key]->previewurl = '';
+        }
+        
 		// Add the counter value if avaible
         $galleries[$key] = $unsort_galleries[$key];
     	
@@ -553,9 +563,11 @@ function nggCreateAlbum( $galleriesID, $template = 'extend', $album = 0) {
             $galleries[$key]->previewurl  = site_url().'/' . $galleries[$key]->path . '/thumbs/thumbs_' . $albumPreview[$galleries[$key]->previewpic]->filename;
         } else {
             $first_image = $wpdb->get_row('SELECT * FROM '. $wpdb->nggpictures .' WHERE exclude != 1 AND galleryid = '. $key .' ORDER by pid DESC limit 0,1');
-            $galleries[$key]->previewpic  = $first_image->pid;
-            $galleries[$key]->previewname = $first_image->filename;
-            $galleries[$key]->previewurl  = site_url() . '/' . $galleries[$key]->path . '/thumbs/thumbs_' . $first_image->filename;
+            if (isset($first_image)) {
+                $galleries[$key]->previewpic  = $first_image->pid;
+                $galleries[$key]->previewname = $first_image->filename;
+                $galleries[$key]->previewurl  = site_url() . '/' . $galleries[$key]->path . '/thumbs/thumbs_' . $first_image->filename;                
+            }
         }
 
         // choose between variable and page link
@@ -570,15 +582,18 @@ function nggCreateAlbum( $galleriesID, $template = 'extend', $album = 0) {
         }
         
         // description can contain HTML tags
-        $galleries[$key]->galdesc = html_entity_decode ( stripslashes($galleries[$key]->galdesc) ) ;
+        $galleries[$key]->galdesc = html_entity_decode ( nggGallery::i18n( stripslashes($galleries[$key]->galdesc), 'gal_' . $galleries[$key]->gid . '_description') ) ;
 
         // i18n
-        $galleries[$key]->title = html_entity_decode ( nggGallery::i18n( stripslashes($galleries[$key]->title) ) ) ;
+        $galleries[$key]->title = html_entity_decode ( nggGallery::i18n( stripslashes($galleries[$key]->title), 'gal_' . $galleries[$key]->gid . '_title') ) ;
         
         // apply a filter on gallery object before the output
         $galleries[$key] = apply_filters('ngg_album_galleryobject', $galleries[$key]);
     }
-
+    
+    // apply a filter on gallery object before paging starts
+    $galleries = apply_filters('ngg_album_galleries_before_paging', $galleries, $album);
+    
     // check for page navigation
     if ($maxElement > 0) {
         if ( !is_home() || $pageid == get_the_ID() ) {
@@ -716,9 +731,9 @@ function nggCreateImageBrowser($picturelist, $template = '') {
     $picture->next_pid = $next_pid;
     $picture->number = $key + 1;
     $picture->total = $total;
-    $picture->linktitle = htmlspecialchars( stripslashes($picture->description) );
-    $picture->alttext = html_entity_decode( stripslashes($picture->alttext) );
-    $picture->description = html_entity_decode( stripslashes($picture->description) );
+    $picture->linktitle = ( empty($picture->description) ) ? ' ' : htmlspecialchars ( stripslashes(nggGallery::i18n($picture->description, 'pic_' . $picture->pid . '_description')) );
+    $picture->alttext = ( empty($picture->alttext) ) ?  ' ' : html_entity_decode ( stripslashes(nggGallery::i18n($picture->alttext, 'pic_' . $picture->pid . '_alttext')) );
+    $picture->description = ( empty($picture->description) ) ? ' ' : html_entity_decode ( stripslashes(nggGallery::i18n($picture->description, 'pic_' . $picture->pid . '_description')) );
     $picture->anchor = 'ngg-imagebrowser-' . $picture->galleryid . '-' . $current_page;
     
     // filter to add custom content for the output
@@ -726,6 +741,7 @@ function nggCreateImageBrowser($picturelist, $template = '') {
     
     // let's get the meta data
     $meta = new nggMeta($act_pid);
+    $meta->sanitize();
     $exif = $meta->get_EXIF();
     $iptc = $meta->get_IPTC();
     $xmp  = $meta->get_XMP();
@@ -797,12 +813,12 @@ function nggSinglePicture($imageID, $width = 250, $height = 250, $mode = '', $fl
     $picture->thumbnailURL = false;
 
     // check fo cached picture
-    if ( ($ngg_options['imgCacheSinglePic']) && ($post->post_status == 'publish') )
+    if ( $post->post_status == 'publish' )
         $picture->thumbnailURL = $picture->cached_singlepic_file($width, $height, $mode );
     
     // if we didn't use a cached image then we take the on-the-fly mode 
     if (!$picture->thumbnailURL) 
-        $picture->thumbnailURL = home_url() . '/' . 'index.php?callback=image&amp;pid=' . $imageID . '&amp;width=' . $width . '&amp;height=' . $height . '&amp;mode=' . $mode;
+        $picture->thumbnailURL = trailingslashit( home_url() ) . 'index.php?callback=image&amp;pid=' . $imageID . '&amp;width=' . $width . '&amp;height=' . $height . '&amp;mode=' . $mode;
 
     // add more variables for render output
     $picture->imageURL = ( empty($link) ) ? $picture->imageURL : $link;
@@ -821,6 +837,7 @@ function nggSinglePicture($imageID, $width = 250, $height = 250, $mode = '', $fl
 
     // let's get the meta data
     $meta = new nggMeta($imageID);
+    $meta->sanitize();
     $exif = $meta->get_EXIF();
     $iptc = $meta->get_IPTC();
     $xmp  = $meta->get_XMP();

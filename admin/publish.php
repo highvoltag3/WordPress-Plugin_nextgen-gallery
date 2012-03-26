@@ -1,14 +1,4 @@
 <?php
-/**
-
-Custom thumbnail for NGG
-Author : Simone Fumagalli | simone@iliveinperego.com
-More info and update : http://www.iliveinperego.com/rotate_for_ngg/
-
-Credits:
- NextGen Gallery : Alex Rabe | http://alexrabe.boelinger.com/wordpress-plugins/nextgen-gallery/
- 
-**/
 
 require_once( dirname( dirname(__FILE__) ) . '/ngg-config.php');
 require_once( NGGALLERY_ABSPATH . '/lib/image.php' );
@@ -43,7 +33,7 @@ $align  = empty ($ngg->options['publish_align'])  ? 'none' : $ngg->options['publ
 <table width="100%" border="0" cellspacing="3" cellpadding="3" >
 	<tr valign="top">
 		<th align="left"><?php _e('Post title','nggallery') ?></th>
-		<td><input type="text" size="70" name="post_title" value="<?php echo $picture->alttext; ?>" />
+		<td><input type="text" size="70" name="post_title" value="<?php echo esc_attr( $picture->alttext);  ?>" />
 		<br /><small><?php _e('Enter the post title ','nggallery') ?></small></td>
 	</tr>
 	<tr valign="top">

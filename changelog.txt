@@ -1,10 +1,44 @@
 NextGEN Gallery
 by Alex Rabe & NextGEN DEV Team
 
-= V1.9.0 - sometimes = 
-* TODO : Facebook connector
-* TODO : Switch to Plupload (http://www.plupload.com/) see also http://wordpress.org/extend/plugins/wplupload/
-* TODO : Rework album page for large amount of galleries
+= V1.9.3 - 26.02.2012 =
+* Bugfix : Ensure to set the slug for "all" albums
+* Bugfix : Updated german translation ( THX to Roger Hunziker )
+* Bugfix : Ensure error checking on IPTC array (THX to Kristian Edlund)
+* Bugfix : Handle IE8 cached images better in slideshow
+* Bugfix : Show album preview image if selected  (THX to Kristian Edlund)
+
+= V1.9.2 - 17.01.2012 =
+* NEW : Added more XMLRPC commands (THX to Vladimir Vinogradsky)
+* Changed : Rework Post-thumbnail function (THX to Kristian Edlund)
+* Bugfix : Check first for valid images on unzip (only Mac OS zip-files)
+* Bugfix : Increase z-index for twenty eleven theme
+* Bugfix : Support non latin chars in tagcloud
+* Bugfix : Allow other tinymce intance
+* Bugfix : Better support for WPML translation
+
+= V1.9.1 - 10.12.2011 =
+* Bugfix : Security hardness for untrusted filenames/meta data (THX to Brian St. Pierre)
+* Bugfix : Fixed security vulnerability (TXH to Jon Cave)
+* Bugfix : Load piclens script via other function
+* Bugfix : IE7 script fix for add gallery 
+* Bugfix : IE7/IE8 width set correctly for edit album autocomplete field
+
+= V1.9.0 - 27.11.2011 = 
+* NEW : Keep images transparency for PNG and GIF format
+* NEW : Switch to Plupload, support now HTML5 Upload (only with WordPress 3.3)
+* NEW : Added client side resize feature (only with WordPress 3.3)
+* NEW : Support for gallery templates in album shortcodes [ album id=x template="name" gallery="templatename" ]
+* NEW : Added new hook ngg_delete_picture
+* Changed : Updated to jQuery Cycle Version 2.9995
+* Changed : Always cache the single pictures, remove option
+* Bugfix : Couldn't use bulk operation for search results
+* Bugfix : Bugfix for Edit thumbnails under IE 8 + 9
+* Bugfix : Allow empty altext in ngg.editImage
+* Bugfix : Various PHP notice fixes
+* Bugfix : Resize fix for Shutter effect and mobile Browser
+* Bugfix : FTP Import missing slug field into database
+* Bugfix : Check also EXIF field "DateTimeOriginal" for timestamp
 
 = V1.8.4 - 26.10.2011 =
 * Bugfix : Fixed security vulnerability (TXH to Alain Schneider)

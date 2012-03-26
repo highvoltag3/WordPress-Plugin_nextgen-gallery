@@ -4,7 +4,7 @@
  *
  * @package NextGEN Gallery
  * @author Alex Rabe
- * @copyright 2009-2011
+ * @copyright 2009-2012
  */
 class nggXMLRPC{
 	
@@ -21,22 +21,46 @@ class nggXMLRPC{
 	    
 		$methods['ngg.installed'] = array(&$this, 'nggInstalled');
         // Image methods
+	    $methods['ngg.getImage'] = array(&$this, 'getImage');
 	    $methods['ngg.getImages'] = array(&$this, 'getImages');
 	    $methods['ngg.uploadImage'] = array(&$this, 'uploadImage');
-        $methods['ngg.deleteImage'] = array(&$this, 'deleteImage');
         $methods['ngg.editImage'] = array(&$this, 'editImage');
+        $methods['ngg.deleteImage'] = array(&$this, 'deleteImage');
         // Gallery methods
+	    $methods['ngg.getGallery'] = array(&$this, 'getGallery');
 	    $methods['ngg.getGalleries'] = array(&$this, 'getGalleries');
 	    $methods['ngg.newGallery'] = array(&$this, 'newGallery');
         $methods['ngg.editGallery'] = array(&$this, 'editGallery');
         $methods['ngg.deleteGallery'] = array(&$this, 'deleteGallery');
         // Album methods
+	    $methods['ngg.getAlbum'] = array(&$this, 'getAlbum');
    	    $methods['ngg.getAlbums'] = array(&$this, 'getAlbums');
         $methods['ngg.newAlbum'] = array(&$this, 'newAlbum');
 	    $methods['ngg.editAlbum'] = array(&$this, 'editAlbum');
         $methods['ngg.deleteAlbum'] = array(&$this, 'deleteAlbum');
-        
+
 		return $methods;
+	}
+
+	/**
+	 * Check if it's an csv string, then serialize it.
+	 * 
+     * @since 1.9.2
+	 * @param string $data
+	 * @return serialized string
+	 */
+	function is_serialized( $data ) {
+	   
+        // if it isn't a string, we don't serialize it.
+        if ( ! is_string( $data ) )
+            return false;
+            
+        if ($data && !strpos( $data , '{')) {
+        	$items = explode(',', $data);
+        	return serialize($items);
+		}
+
+		return $data;
 	}
 
 	/**
@@ -296,12 +320,12 @@ class nggXMLRPC{
 			return $this->error;
 
 		if ( !$image = nggdb::find_image($id)  )
-			return(new IXR_Error(404, __("Invalid image ID")));
+			return(new IXR_Error(404, __( 'Invalid image ID' )));
 
         if ( !current_user_can( 'NextGEN Manage gallery' ) && !nggAdmin::can_manage_this_gallery($image->author) )
             return new IXR_Error( 401, __( 'Sorry, you must be able to edit this image' ) );
 
-		if ( !empty( $alttext ) )
+		if ( !empty( $id ) )
 			$result = nggdb::update_image($id, false, false, $description, $alttext, $exclude);
 		
 		if ( !$result )
@@ -418,7 +442,7 @@ class nggXMLRPC{
 	 *	    	- string new album name
      *          - int id of preview image
      *          - string description
-     *          - string serialized array of galleries 
+     *          - string serialized array of galleries or a comma-separated string of gallery IDs
 	 * @return int with new album ID
 	 */
 	function newAlbum($args) {
@@ -432,7 +456,7 @@ class nggXMLRPC{
 		$name   	= $args[3];
 		$preview   	= (int) $args[4];
         $description= $args[5];
-        $galleries 	= $args[6];
+        $galleries 	= $this->is_serialized($args[6]);
         $id 		= false;
 
 		if ( !$user = $this->login($username, $password) )
@@ -465,7 +489,7 @@ class nggXMLRPC{
 	 *	    	- string album name
      *          - int id of preview image
      *          - string description
-     *          - string serialized array of galleries 
+     *          - string serialized array of galleries or a comma-separated string of gallery IDs
 	 * @return true if success
 	 */
 	function editAlbum($args) {
@@ -482,7 +506,7 @@ class nggXMLRPC{
 		$name   	= $args[4];
 		$preview   	= (int) $args[5];
         $description= $args[6];
-        $galleries 	= $args[7];
+        $galleries 	= $this->is_serialized($args[7]);
 
 		if ( !$user = $this->login($username, $password) )
 			return $this->error;
@@ -494,7 +518,7 @@ class nggXMLRPC{
 			return new IXR_Error( 401, __( 'Sorry, you must be able to manage albums' ) );
 
 		if ( !empty( $name ) )
-			$result = nggdb::update_album($id, $name, $preview, $description, $description, $galleries);
+			$result = nggdb::update_album($id, $name, $preview, $description, $galleries);
 		
 		if ( !$result )
 			return new IXR_Error(500, __('Sorry, could not update the album'));
@@ -615,6 +639,41 @@ class nggXMLRPC{
 	}
 
 	/**
+	 * Method "ngg.getAlbum"
+	 * Return the specified album
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param array $args Method parameters.
+	 * 			- int blog_id
+	 *	    	- string username
+	 *	    	- string password
+	 *          - int album_id
+	 * @return array with the album object
+	 */
+	function getAlbum($args) {
+
+		global $nggdb;
+
+        $this->escape($args);
+		$blog_ID    = (int) $args[0];
+		$username	= $args[1];
+		$password	= $args[2];
+		$id         = (int) $args[3];
+
+		if ( !$user = $this->login($username, $password) )
+			return $this->error;
+
+		if( !current_user_can( 'NextGEN Edit album' ) )
+			return new IXR_Error( 401, __( 'Sorry, you must be able to manage albums' ) );
+
+		$album = $nggdb->find_album( $id );
+
+		return($album);
+
+	}
+
+	/**
 	 * Method "ngg.getGalleries"
 	 * Return the list of all galleries
 	 * 
@@ -645,6 +704,41 @@ class nggXMLRPC{
 		
 		return($gallery_list);
 		
+	}
+
+	/**
+	 * Method "ngg.getGallery"
+	 * Return the specified gallery
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param array $args Method parameters.
+	 * 			- int blog_id
+	 *	    	- string username
+	 *	    	- string password
+	 *          - int gallery_id
+	 * @return array with the gallery object
+	 */
+	function getGallery($args) {
+
+		global $nggdb;
+
+        $this->escape($args);
+		$blog_ID    = (int) $args[0];
+		$username	= $args[1];
+		$password	= $args[2];
+		$gid		= (int) $args[3];
+
+		if ( !$user = $this->login($username, $password) )
+			return $this->error;
+
+		if( !current_user_can( 'NextGEN Manage gallery' ) )
+			return new IXR_Error( 401, __( 'Sorry, you must be able to manage galleries' ) );
+
+		$gallery = $nggdb->find_gallery($gid);
+
+		return($gallery);
+
 	}
 
 	/**
@@ -691,6 +785,56 @@ class nggXMLRPC{
 		
 		return($picture_list);
 		
+	}
+
+	/**
+	 * Method "ngg.getImage"
+	 * Return a single image inside a gallery
+	 *
+	 * @since 1.9.2
+	 *
+	 * @param array $args Method parameters.
+	 * 			- int blog_id
+	 *	    	- string username
+	 *	    	- string password
+	 *          - int picture_id
+	 * @return array with image properties
+	 */
+	function getImage($args) {
+
+		global $nggdb;
+
+		require_once ( dirname ( dirname( __FILE__ ) ). '/admin/functions.php' );	// admin functions
+
+        $this->escape($args);
+		$blog_ID    = (int) $args[0];
+		$username	= $args[1];
+		$password	= $args[2];
+		$pid    	= (int) $args[3];
+
+		if ( !$user = $this->login($username, $password) )
+			return $this->error;
+
+		// get picture
+		$image = $nggdb->find_image( $pid );
+
+		if ($image) {
+			$gid = $image->galleryid;
+
+			// Look for the gallery , could we find it ?
+			if ( !$gallery = nggdb::find_gallery( $gid ) )
+				return new IXR_Error(404, __('Could not find gallery ' . $gid ));
+
+			// Now check if you have the correct capability for this gallery
+			if ( !nggAdmin::can_manage_this_gallery($gallery->author) ) {
+				logIO('O', '(NGG) User does not have upload_files capability');
+				$this->error = new IXR_Error(401, __('You are not allowed to upload files to this gallery.'));
+				return $this->error;
+			}
+		}
+
+		return($image);
+
 	}
 
 	/**

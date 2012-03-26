@@ -4,22 +4,24 @@
  * 
  * @package NextGEN Gallery
  * @author Alex Rabe
- * @copyright 2008-2010
+ * @copyright 2008-2011
  * @since 1.0.0
  */
 class nggAdminPanel{
 	
 	// constructor
-	function nggAdminPanel() {
+	function __construct() {
 
 		// Add the admin menu
 		add_action( 'admin_menu', array (&$this, 'add_menu') ); 
+        add_action( 'admin_bar_menu', array(&$this, 'admin_bar_menu'), 99 );
 		add_action( 'network_admin_menu', array (&$this, 'add_network_admin_menu') );
         
 		// Add the script and style files
 		add_action('admin_print_scripts', array(&$this, 'load_scripts') );
 		add_action('admin_print_styles', array(&$this, 'load_styles') );
-
+        
+        //TODO: remove after release of Wordpress 3.3
 		add_filter('contextual_help', array(&$this, 'show_help'), 10, 2);
         add_filter('current_screen', array(&$this, 'edit_current_screen'));
 
@@ -43,9 +45,6 @@ class nggAdminPanel{
 	    if ( wpmu_enable_function('wpmuRoles') || wpmu_site_admin() )
 			add_submenu_page( NGGFOLDER , __('Roles', 'nggallery'), __('Roles', 'nggallery'), 'activate_plugins', 'nggallery-roles', array (&$this, 'show_menu'));
 	    add_submenu_page( NGGFOLDER , __('About this Gallery', 'nggallery'), __('About', 'nggallery'), 'NextGEN Gallery overview', 'nggallery-about', array (&$this, 'show_menu'));
-		//TODO: Remove after WP 3.1 release, not longer needed 
-        if ( is_multisite() && wpmu_site_admin() ) 
-			add_submenu_page( 'ms-admin.php' , __('NextGEN Gallery', 'nggallery'), __('NextGEN Gallery', 'nggallery'), 'activate_plugins', 'nggallery-wpmu', array (&$this, 'show_menu'));
 
 	    if ( !is_multisite() || wpmu_site_admin() ) 
             add_submenu_page( NGGFOLDER , __('Reset / Uninstall', 'nggallery'), __('Reset / Uninstall', 'nggallery'), 'activate_plugins', 'nggallery-setup', array (&$this, 'show_menu'));
@@ -61,6 +60,37 @@ class nggAdminPanel{
 		add_submenu_page( NGGFOLDER , __('Network settings', 'nggallery'), __('Network settings', 'nggallery'), 'nggallery-wpmu', NGGFOLDER,  array (&$this, 'show_network_settings'));
         add_submenu_page( NGGFOLDER , __('Reset / Uninstall', 'nggallery'), __('Reset / Uninstall', 'nggallery'), 'activate_plugins', 'nggallery-setup', array (&$this, 'show_menu'));
 	}
+
+    /**
+     * Adding NextGEN Gallery to the Admin bar
+     * 
+     * @since 1.9.0
+     * 
+     * @return void
+     */
+    function admin_bar_menu() {
+    	// If the current user can't write posts, this is all of no use, so let's not output an admin menu
+    	if ( !current_user_can('NextGEN Gallery overview') )
+    		return;
+    		
+    	global $wp_admin_bar;
+        
+    	$wp_admin_bar->add_menu( array( 'id' => 'ngg-menu', 'title' => __( 'Gallery' ), 'href' => admin_url('admin.php?page='. NGGFOLDER) ) );
+        $wp_admin_bar->add_menu( array( 'parent' => 'ngg-menu', 'id' => 'ngg-menu-overview', 'title' => __('Overview', 'nggallery'), 'href' => admin_url('admin.php?page='. NGGFOLDER) ) );
+        if ( current_user_can('NextGEN Upload images') )
+            $wp_admin_bar->add_menu( array( 'parent' => 'ngg-menu', 'id' => 'ngg-menu-add-gallery', 'title' => __('Add Gallery / Images', 'nggallery'), 'href' => admin_url('admin.php?page=nggallery-add-gallery') ) );
+        if ( current_user_can('NextGEN Manage gallery') )
+            $wp_admin_bar->add_menu( array( 'parent' => 'ngg-menu', 'id' => 'ngg-menu-manage-gallery', 'title' => __('Manage Gallery', 'nggallery'), 'href' => admin_url('admin.php?page=nggallery-manage-gallery') ) );
+        if ( current_user_can('NextGEN Edit album') )
+            $wp_admin_bar->add_menu( array( 'parent' => 'ngg-menu', 'id' => 'ngg-menu-manage-album', 'title' => _n( 'Album', 'Albums', 1, 'nggallery' ), 'href' => admin_url('admin.php?page=nggallery-manage-album') ) );
+        if ( current_user_can('NextGEN Manage tags') )
+            $wp_admin_bar->add_menu( array( 'parent' => 'ngg-menu', 'id' => 'ngg-menu-tags', 'title' => __('Tags', 'nggallery'), 'href' => admin_url('admin.php?page=nggallery-tags') ) );
+        if ( current_user_can('NextGEN Change options') )
+            $wp_admin_bar->add_menu( array( 'parent' => 'ngg-menu', 'id' => 'ngg-menu-options', 'title' => __('Options', 'nggallery'), 'href' => admin_url('admin.php?page=nggallery-options') ) );
+        if ( wpmu_enable_function('wpmuStyle') && ( current_user_can('NextGEN Change style') ))
+            $wp_admin_bar->add_menu( array( 'parent' => 'ngg-menu', 'id' => 'ngg-menu-style', 'title' => __('Style', 'nggallery'), 'href' => admin_url('admin.php?page=nggallery-style') ) );
+        $wp_admin_bar->add_menu( array( 'parent' => 'ngg-menu', 'id' => 'ngg-menu-about', 'title' => __('About', 'nggallery'), 'href' => admin_url('admin.php?page=nggallery-about') ) );
+    }
 
     // show the network page
     function show_network_settings() {
@@ -158,12 +188,6 @@ class nggAdminPanel{
 				include_once ( dirname (__FILE__) . '/about.php' );		// nggallery_admin_about
 				nggallery_admin_about();
 				break;
-            //TODO: Remove after WP 3.1 release, not longer needed   
-			case "nggallery-wpmu" :
-				include_once ( dirname (__FILE__) . '/style.php' );		
-				include_once ( dirname (__FILE__) . '/wpmu.php' );		// nggallery_wpmu_admin
-				nggallery_wpmu_setup();
-				break;
 			case "nggallery" :
 			default :
 				include_once ( dirname (__FILE__) . '/overview.php' ); 	// nggallery_admin_overview
@@ -190,10 +214,32 @@ class nggAdminPanel{
 					'error' => __('Unexpected Error', 'nggallery'),
 					'failure' => __('A failure occurred', 'nggallery')				
 		) );
+        wp_register_script( 'ngg-plupload-handler', NGGALLERY_URLPATH .'admin/js/plupload.handler.js', array('plupload-all'), '0.0.1' );
+    	wp_localize_script( 'ngg-plupload-handler', 'pluploadL10n', array(
+    		'queue_limit_exceeded' => __('You have attempted to queue too many files.'),
+    		'file_exceeds_size_limit' => __('This file exceeds the maximum upload size for this site.'),
+    		'zero_byte_file' => __('This file is empty. Please try another.'),
+    		'invalid_filetype' => __('This file type is not allowed. Please try another.'),
+    		'not_an_image' => __('This file is not an image. Please try another.'),
+    		'image_memory_exceeded' => __('Memory exceeded. Please try another smaller file.'),
+    		'image_dimensions_exceeded' => __('This is larger than the maximum size. Please try another.'),
+    		'default_error' => __('An error occurred in the upload. Please try again later.'),
+    		'missing_upload_url' => __('There was a configuration error. Please contact the server administrator.'),
+    		'upload_limit_exceeded' => __('You may only upload 1 file.'),
+    		'http_error' => __('HTTP error.'),
+    		'upload_failed' => __('Upload failed.'),
+    		'io_error' => __('IO error.'),
+    		'security_error' => __('Security error.'),
+    		'file_cancelled' => __('File canceled.'),
+    		'upload_stopped' => __('Upload stopped.'),
+    		'dismiss' => __('Dismiss'),
+    		'crunching' => __('Crunching&hellip;'),
+    		'deleted' => __('moved to the trash.'),
+    		'error_uploading' => __('&#8220;%s&#8221; has failed to upload due to an error')
+    	) );        
 		wp_register_script('ngg-progressbar', NGGALLERY_URLPATH .'admin/js/ngg.progressbar.js', array('jquery'), '2.0.1');
+        wp_register_script('jquery-ui-autocomplete', NGGALLERY_URLPATH .'admin/js/jquery.ui.autocomplete.min.js', array('jquery-ui-core', 'jquery-ui-widget'), '1.8.15');
 		wp_register_script('swfupload_f10', NGGALLERY_URLPATH .'admin/js/swfupload.js', array('jquery'), '2.2.0');
-        // Until release of 3.1 not used, due to script conflict
-        wp_register_script('jquery-ui-autocomplete', NGGALLERY_URLPATH .'admin/js/jquery.ui.autocomplete.min.js', array('jquery-ui-core', 'jquery-ui-widget'), '1.8.9');
        		
 		switch ($_GET['page']) {
 			case NGGFOLDER : 
@@ -205,21 +251,19 @@ class nggAdminPanel{
 				wp_enqueue_script( 'ngg-ajax' );
 				wp_enqueue_script( 'ngg-progressbar' );
 				wp_enqueue_script( 'jquery-ui-dialog' );
-				add_thickbox();
+    			wp_register_script('shutter', NGGALLERY_URLPATH .'shutter/shutter-reloaded.js', false ,'1.3.2');
+    			wp_localize_script('shutter', 'shutterSettings', array(
+    						'msgLoading' => __('L O A D I N G', 'nggallery'),
+    						'msgClose' => __('Click to Close', 'nggallery'),
+    						'imageCount' => '1'				
+    			) );
+    			wp_enqueue_script( 'shutter' ); 
 			break;
 			case "nggallery-manage-album" :
-                if ( version_compare( $wp_version, '3.0.999', '>' ) ) {
-                    wp_enqueue_script( 'jquery-ui-autocomplete' ); 
-                    wp_enqueue_script( 'jquery-ui-dialog' );
-                    wp_enqueue_script( 'jquery-ui-sortable' );
-                    wp_enqueue_script( 'ngg-autocomplete', NGGALLERY_URLPATH .'admin/js/ngg.autocomplete.js', array('jquery-ui-autocomplete'), '1.0');
-                 } else {
-                    // Due to script conflict with jQuery UI 1.8.6
-                    wp_deregister_script( 'jquery-ui-sortable' );
-                    // Package included sortable, dialog, autocomplete, tabs
-                    wp_enqueue_script('jquery-ui', NGGALLERY_URLPATH .'admin/js/jquery-ui-1.8.6.min.js', array('jquery'), '1.8.6');
-                    wp_enqueue_script('ngg-autocomplete', NGGALLERY_URLPATH .'admin/js/ngg.autocomplete.js', array('jquery-ui'), '1.0');
-                }                
+                wp_enqueue_script( 'jquery-ui-autocomplete' ); 
+                wp_enqueue_script( 'jquery-ui-dialog' );
+                wp_enqueue_script( 'jquery-ui-sortable' );
+                wp_enqueue_script( 'ngg-autocomplete', NGGALLERY_URLPATH .'admin/js/ngg.autocomplete.js', array('jquery-ui-autocomplete'), '1.0.1');               
 			break;
 			case "nggallery-options" :
 				wp_enqueue_script( 'jquery-ui-tabs' );
@@ -227,8 +271,11 @@ class nggAdminPanel{
 			break;		
 			case "nggallery-add-gallery" :
 				wp_enqueue_script( 'jquery-ui-tabs' );
-				wp_enqueue_script( 'mutlifile', NGGALLERY_URLPATH .'admin/js/jquery.MultiFile.js', array('jquery'), '1.4.4' );
-				wp_enqueue_script( 'ngg-swfupload-handler', NGGALLERY_URLPATH .'admin/js/swfupload.handler.js', array('swfupload_f10'), '1.0.3' );
+				wp_enqueue_script( 'multifile', NGGALLERY_URLPATH .'admin/js/jquery.MultiFile.js', array('jquery'), '1.4.4' );
+                if ( defined('IS_WP_3_3') )
+                    wp_enqueue_script( 'ngg-plupload-handler' );
+                else
+				    wp_enqueue_script( 'ngg-swfupload-handler', NGGALLERY_URLPATH .'admin/js/swfupload.handler.js', array('swfupload_f10'), '1.0.3' );
 				wp_enqueue_script( 'ngg-ajax' );
 				wp_enqueue_script( 'ngg-progressbar' );
                 wp_enqueue_script( 'jquery-ui-dialog' );
@@ -257,7 +304,9 @@ class nggAdminPanel{
 				wp_enqueue_style( 'thickbox' );	
 			case "nggallery-about" :
 				wp_enqueue_style( 'nggadmin' );
-                wp_admin_css( 'css/dashboard' );
+                //TODO:Remove after WP 3.3 release
+                if ( !defined('IS_WP_3_3') )
+                    wp_admin_css( 'css/dashboard' );
 			break;
 			case "nggallery-add-gallery" :
 				wp_enqueue_style( 'ngg-jqueryui' );
@@ -267,11 +316,11 @@ class nggAdminPanel{
 				wp_enqueue_style( 'nggadmin' );
             break;    
 			case "nggallery-manage-gallery" :
+                wp_enqueue_style('shutter', NGGALLERY_URLPATH .'shutter/shutter-reloaded.css', false, '1.3.2', 'screen');
 			case "nggallery-roles" :
 			case "nggallery-manage-album" :
 				wp_enqueue_style( 'ngg-jqueryui' );
 				wp_enqueue_style( 'nggadmin' );
-				wp_enqueue_style( 'thickbox' );			
 			break;
 			case "nggallery-tags" :
 				wp_enqueue_style( 'nggtags', NGGALLERY_URLPATH .'admin/css/tags-admin.css', false, '2.6.1', 'screen' );
@@ -285,11 +334,11 @@ class nggAdminPanel{
 	}
 	
 	function show_help($help, $screen) {
-		
+
 		// since WP3.0 it's an object
 		if ( is_object($screen) )
 			$screen = $screen->id;
-		
+        
 		$link = '';
 		// menu title is localized...
 		$i18n = strtolower  ( _n( 'Gallery', 'Galleries', 1, 'nggallery' ) );
@@ -357,6 +406,20 @@ class nggAdminPanel{
 		return $help;
 	}
 
+    /**
+     * New wrapper for WordPress 3.3, so contextual help will be added to the admin bar
+     * Rework this see http://wpdevel.wordpress.com/2011/12/06/help-and-screen-api-changes-in-3-3/
+     * 
+     * @since 1.9.0
+     * @param object $screen
+     * @return void
+     */
+    function add_contextual_help($screen) {
+        
+        $help = $this->show_help('', $screen);
+        //add_contextual_help( $screen, $help );
+    }
+
 	/**
 	 * We need to manipulate the current_screen name so that we can show the correct column screen options
 	 * 
@@ -385,6 +448,9 @@ class nggAdminPanel{
 					$screen->base = $screen->id = 'nggallery-manage-gallery';	
 			break;
 		}
+        
+        if ( defined('IS_WP_3_3') )
+            $this->add_contextual_help($screen);
 
 		return $screen;
 	}
@@ -411,22 +477,29 @@ class nggAdminPanel{
 	 * @return array of the content
 	 */
 	function get_remote_array($url) {
-		if ( function_exists('wp_remote_request') ) {
-					
-			$options = array();
-			$options['headers'] = array(
-				'User-Agent' => 'NextGEN Gallery Information Reader V' . NGGVERSION . '; (' . get_bloginfo('url') .')'
-			 );
-			 
-			$response = wp_remote_request($url, $options);
-			
-			if ( is_wp_error( $response ) )
-				return false;
-		
-			if ( 200 != $response['response']['code'] )
-				return false;
-		   	
-			$content = unserialize($response['body']);
+        
+        if ( function_exists('wp_remote_request') ) {
+
+            if ( false === ( $content = get_transient( 'ngg_request_' . md5($url) ) ) ) {
+                
+    			$options = array();
+    			$options['headers'] = array(
+    				'User-Agent' => 'NextGEN Gallery Information Reader V' . NGGVERSION . '; (' . get_bloginfo('url') .')'
+    			 );
+    			 
+    			$response = wp_remote_request($url, $options);
+    			
+    			if ( is_wp_error( $response ) )
+    				return false;
+    		
+    			if ( 200 != $response['response']['code'] )
+    				return false;
+    		   	
+                $content = $response['body'];
+                set_transient( 'ngg_request_' . md5($url), $content, 60*60*48 );            
+            }
+            
+			$content = unserialize($content);
 	
 			if (is_array($content)) 
 				return $content;
@@ -454,5 +527,3 @@ function wpmu_enable_function($value) {
 	// if this is not WPMU, enable it !
 	return true;
 }
-
-?>

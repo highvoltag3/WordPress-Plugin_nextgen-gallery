@@ -1,7 +1,7 @@
 /*
  * Implementation of jQuery UI Autocomplete
  * see http://jqueryui.com/demos/autocomplete/
- * Version:  1.0.0
+ * Version:  1.0.1
  * Author : Alex Rabe
  */ 
 jQuery.fn.nggAutocomplete = function ( args ) { 
@@ -25,7 +25,11 @@ jQuery.fn.nggAutocomplete = function ( args ) {
     // get current value of drop down field
     var c_text = jQuery(obj + ' :selected').text();
     var c_val  = jQuery(obj).val();
-    var c_width= jQuery(obj).css('width');
+    // IE7 / IE 8 didnt get often the correct width
+    if (s.width == undefined)  
+        var c_width = jQuery(this).width();
+    else
+        var c_width = s.width;
     //hide first the drop down field
     jQuery(obj).hide();
     jQuery(obj).after('<input name="' + id + '_ac" type="text" id="' + id + '_ac"/>');

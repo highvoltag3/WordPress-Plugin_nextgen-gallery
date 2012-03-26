@@ -4,7 +4,7 @@
  * 
  * @author 		Ian Selby (ian@gen-x-design.com)
  * @copyright 	Copyright 2006-2011
- * @version 	1.2.1 (based on 1.1.3)
+ * @version 	1.3.0 (based on 1.1.3)
  * @modded      by Alex Rabe
  * 
  */
@@ -233,6 +233,11 @@ class ngg_Thumbnail {
 		    $memoryNeeded = memory_get_usage() + $memoryNeeded;
 			// get memory limit
 			$memory_limit = ini_get('memory_limit');
+            
+            // PHP docs : Note that to have no memory limit, set this directive to -1.
+            if ($memory_limit == -1 ) return;
+            
+            // Just check megabyte limits, not higher
             if ( strtolower(substr($memory_limit, -1)) == 'm' ) {
                 
     			if ($memory_limit != '') {
@@ -382,9 +387,8 @@ class ngg_Thumbnail {
      * 
      * @param int $Width
      * @param int $Height
-     * @param int $resampleMode
      */
-    function resizeFix($Width = 0, $Height = 0, $resampleMode = 3) {
+    function resizeFix($Width = 0, $Height = 0, $deprecated = 3) {
         $this->newWidth = $Width;
         $this->newHeight = $Height;
 
@@ -396,7 +400,7 @@ class ngg_Thumbnail {
 		}
 
 //		ImageCopyResampled(
-		$this->fastimagecopyresampled(
+		$this->imagecopyresampled(
 			$this->workingImage,
 			$this->oldImage,
 			0,
@@ -406,8 +410,7 @@ class ngg_Thumbnail {
 			$this->newWidth,
 			$this->newHeight,
 			$this->currentDimensions['width'],
-			$this->currentDimensions['height'],
-			$resampleMode
+			$this->currentDimensions['height']
 		);
 
 		$this->oldImage = $this->workingImage;
@@ -422,9 +425,8 @@ class ngg_Thumbnail {
      *
      * @param int $maxWidth
      * @param int $maxHeight
-     * @param int $resampleMode
      */
-    function resize($maxWidth = 0, $maxHeight = 0, $resampleMode = 3) {
+    function resize($maxWidth = 0, $maxHeight = 0, $deprecated = 3) {
         $this->maxWidth = $maxWidth;
         $this->maxHeight = $maxHeight;
 
@@ -438,7 +440,7 @@ class ngg_Thumbnail {
 		}
 
 //		ImageCopyResampled(
-		$this->fastimagecopyresampled(
+		$this->imagecopyresampled(
 			$this->workingImage,
 			$this->oldImage,
 			0,
@@ -448,8 +450,7 @@ class ngg_Thumbnail {
 			$this->newDimensions['newWidth'],
 			$this->newDimensions['newHeight'],
 			$this->currentDimensions['width'],
-			$this->currentDimensions['height'],
-			$resampleMode
+			$this->currentDimensions['height']
 		);
 
 		$this->oldImage = $this->workingImage;
@@ -475,7 +476,7 @@ class ngg_Thumbnail {
 			$this->workingImage = ImageCreate($this->newDimensions['newWidth'],$this->newDimensions['newHeight']);
 		}
 
-		ImageCopyResampled(
+		$this->ImageCopyResampled(
 			$this->workingImage,
 			$this->oldImage,
 			0,
@@ -498,9 +499,8 @@ class ngg_Thumbnail {
 	 * Crops the image from calculated center in a square of $cropSize pixels
 	 *
 	 * @param int $cropSize
-	 * @param int $resampleMode
 	 */
-	function cropFromCenter($cropSize, $resampleMode = 3) {
+	function cropFromCenter($cropSize) {
 	    if($cropSize > $this->currentDimensions['width']) $cropSize = $this->currentDimensions['width'];
 	    if($cropSize > $this->currentDimensions['height']) $cropSize = $this->currentDimensions['height'];
 
@@ -514,8 +514,7 @@ class ngg_Thumbnail {
 			$this->workingImage = ImageCreate($cropSize,$cropSize);
 		}
 
-//		imagecopyresampled(
-		$this->fastimagecopyresampled(
+		$this->imagecopyresampled(
             $this->workingImage,
             $this->oldImage,
             0,
@@ -525,8 +524,7 @@ class ngg_Thumbnail {
             $cropSize,
             $cropSize,
             $cropSize,
-            $cropSize,
-            $resampleMode
+            $cropSize
 		);
 
 		$this->oldImage = $this->workingImage;
@@ -560,7 +558,7 @@ class ngg_Thumbnail {
 			$this->workingImage = ImageCreate($width,$height);
 		}
 
-		imagecopyresampled(
+		$this->imagecopyresampled(
             $this->workingImage,
             $this->oldImage,
             0,
@@ -713,7 +711,7 @@ class ngg_Thumbnail {
 		
 		$this->workingImage = imagecreatetruecolor( $this->currentDimensions['width'], $this->currentDimensions['height'] ); 
 		
-		imagecopyresampled($this->workingImage, $this->oldImage, 0, 0, $sx, $sy, $this->currentDimensions['width'], $this->currentDimensions['height'], $sw, $sh) ;
+		$this->imagecopyresampled($this->workingImage, $this->oldImage, 0, 0, $sx, $sy, $this->currentDimensions['width'], $this->currentDimensions['height'], $sw, $sh) ;
 		$this->oldImage = $this->workingImage;
 		$this->newImage = $this->workingImage;
 		
@@ -913,41 +911,34 @@ class ngg_Thumbnail {
 	}
 	
     /**
-     * Fast imagecopyresampled by tim@leethost.com
-     *
-     */	
-	function fastimagecopyresampled (&$dst_image, $src_image, $dst_x, $dst_y, $src_x, $src_y, $dst_w, $dst_h, $src_w, $src_h, $quality = 3) {
-		// Plug-and-Play fastimagecopyresampled function replaces much slower imagecopyresampled.
-		// Just include this function and change all "imagecopyresampled" references to "fastimagecopyresampled".
-		// Typically from 30 to 60 times faster when reducing high resolution images down to thumbnail size using the default quality setting.
-		// Author: Tim Eckel - Date: 12/17/04 - Project: FreeRingers.net - Freely distributable.
-		//
-		// Optional "quality" parameter (defaults is 3).  Fractional values are allowed, for example 1.5.
-		// 1 = Up to 600 times faster.  Poor results, just uses imagecopyresized but removes black edges.
-		// 2 = Up to 95 times faster.  Images may appear too sharp, some people may prefer it.
-		// 3 = Up to 60 times faster.  Will give high quality smooth results very close to imagecopyresampled.
-		// 4 = Up to 25 times faster.  Almost identical to imagecopyresampled for most images.
-		// 5 = No speedup.  Just uses imagecopyresampled, highest quality but no advantage over imagecopyresampled.
-		
-		if (empty($src_image) || empty($dst_image)) { return false; }
-		
-		if ($quality <= 1) {
-			$temp = imagecreatetruecolor ($dst_w + 1, $dst_h + 1);
-			imagecopyresized ($temp, $src_image, $dst_x, $dst_y, $src_x, $src_y, $dst_w + 1, $dst_h + 1, $src_w, $src_h);
-			imagecopyresized ($dst_image, $temp, 0, 0, 0, 0, $dst_w, $dst_h, $dst_w, $dst_h);
-			imagedestroy ($temp);
-		} elseif ($quality < 5 && (($dst_w * $quality) < $src_w || ($dst_h * $quality) < $src_h)) {
-			$tmp_w = $dst_w * $quality;
-			$tmp_h = $dst_h * $quality;
-			// on whatever reason PHP 4.4.8 stopped here.
-			$temp = imagecreatetruecolor ($tmp_w + 1, $tmp_h + 1);
-			imagecopyresized ($temp, $src_image, $dst_x * $quality, $dst_y * $quality, $src_x, $src_y, $tmp_w + 1, $tmp_h + 1, $src_w, $src_h);
-			imagecopyresampled ($dst_image, $temp, 0, 0, 0, 0, $dst_w, $dst_h, $tmp_w, $tmp_h);
-			imagedestroy ($temp);
-		} else {
-			imagecopyresampled ($dst_image, $src_image, $dst_x, $dst_y, $src_x, $src_y, $dst_w, $dst_h, $src_w, $src_h);
-		}
-		return true;
-	}
+     * Modfied imagecopyresampled function to save transparent images
+     * See : http://www.akemapa.com/2008/07/10/php-gd-resize-transparent-image-png-gif/
+     * @since 1.9.0
+     * 
+     * @param resource $dst_image
+     * @param resource $src_image
+     * @param int $dst_x
+     * @param int $dst_y
+     * @param int $src_x
+     * @param int $src_y
+     * @param int $dst_w
+     * @param int $dst_h
+     * @param int $src_w
+     * @param int $src_h
+     * @return bool
+     */
+    function imagecopyresampled( &$dst_image , $src_image , $dst_x , $dst_y , $src_x , $src_y , $dst_w , $dst_h , $src_w , $src_h) {
+        
+        // Check if this image is PNG or GIF, then set if Transparent  
+        if( $this->format == 'GIF' || $this->format == 'PNG'){
+            imagealphablending($dst_image, false);
+            imagesavealpha($dst_image, true);
+            $transparent = imagecolorallocatealpha($dst_image, 255, 255, 255, 127);
+            imagefilledrectangle($dst_image, 0, 0, $dst_w, $dst_h, $transparent);
+        }
+        
+        imagecopyresampled($dst_image , $src_image , $dst_x , $dst_y , $src_x , $src_y , $dst_w , $dst_h , $src_w , $src_h);
+        return true;         
+    }
 }
 ?>

@@ -1,12 +1,12 @@
 <?php
-
+// see : http://wordpress.org/support/topic/plugin-nextgen-gallery-ngg-and-featured-image-issue?replies=14
 /**
  * nggPostThumbnail - Class for adding the post thumbnail feature
  * 
  * @package NextGEN Gallery
  * @author Alex Rabe 
- * @copyright 2010
- * @version 1.0.1
+ * @copyright 2010-2012
+ * @version 1.0.2
  * @access internal
  */
 class nggPostThumbnail {
@@ -86,43 +86,45 @@ class nggPostThumbnail {
 		if (!$image) 
 			return $html;
 
-		$img_src =  false;
-		
+		$img_src = false;		
 		$class = 'wp-post-image ngg-image-' . $image->pid . ' ';
         
-        // look up for the post thumbnial size and use them if defined
-        if ($size == 'post-thumbnail') {
-            if ( is_array($_wp_additional_image_sizes) && isset($_wp_additional_image_sizes['post-thumbnail']) ) {
-                $size = array();
-     			$size[0] = $_wp_additional_image_sizes['post-thumbnail']['width'];
-    			$size[1] = $_wp_additional_image_sizes['post-thumbnail']['height'];
-                $size[2] = 'crop';
-            }
-        }
-		
-		if ( is_array($size) )
+        if (is_array($size) || is_array($_wp_additional_image_sizes) && isset($_wp_additional_image_sizes[$size])) {		        	        		
 			$class .= isset($attr['class']) ? esc_attr($attr['class']) : '';
 		
-		// render a new image or show the thumbnail if we didn't get size parameters
-		if ( is_array($size) ) {
-			
-			$width = absint( $size[0] );
-			$height = absint( $size[1] );
-            $mode = isset($size[2]) ? $size[2] : '';
+			if( is_array($size)){
+				//the parameters is given as an array rather than a predfined image
+				$width = absint( $size[0] );
+				$height = absint( $size[1] );
+				if(isset($size[2]) && $size[2] === true) {
+					$mode = 'crop';
+				} else if(isset($size[2])){
+					$mode = $size[2];
+				} else {
+					$mode = '';					
+				}
+			} else {
+				$width = absint( $_wp_additional_image_sizes[$size]['width'] );
+				$height = absint( $_wp_additional_image_sizes[$size]['height'] );
+            	$mode = ($_wp_additional_image_sizes[$size]['crop']) ? 'crop' : '';
+			}
 
             // check fo cached picture
-            if ( ($ngg_options['imgCacheSinglePic']) && ($post->post_status == 'publish') )
-                $img_src = $image->cached_singlepic_file( $width, $height, $mode );                
+                if ( $post->post_status == 'publish' )
+                    $img_src = $image->cached_singlepic_file( $width, $height, $mode );                
 		    
-		    // if we didn't use a cached image then we take the on-the-fly mode 
-		    if ($img_src ==  false) 
-		        $img_src = home_url() . '/' . 'index.php?callback=image&amp;pid=' . $image->pid . '&amp;width=' . $width . '&amp;height=' . $height . '&amp;mode=crop';
+			// if we didn't use a cached image then we take the on-the-fly mode 
+		        if ($img_src ==  false) 
+		        	$img_src = trailingslashit( home_url() ) . 'index.php?callback=image&amp;pid=' . $image->pid . '&amp;width=' . $width . '&amp;height=' . $height . '&amp;mode=crop';
                 
 		} else {
 			$img_src = $image->thumbURL;
 		}
 		
-		$html = '<img src="' . esc_attr($img_src) . '" alt="' . esc_attr($image->alttext) . '" title="' . esc_attr($image->title).'" class="'.$class.'" />';
+		$alttext = isset($attr['alt']) ? $attr['alt'] : $image->alttext;
+		$titletext = isset($attr['title']) ? $attr['title'] : $image->title;
+
+		$html = '<img src="' . esc_attr($img_src) . '" alt="' . esc_attr($alttext) . '" title="' . esc_attr($titletext) .'" class="'.$class.'" />';
 
 		return $html;
 	}
@@ -188,14 +190,14 @@ class nggPostThumbnail {
                 // Use post thumbnail settings if defined
      			$width = absint( $_wp_additional_image_sizes['post-thumbnail']['width'] );
     			$height = absint( $_wp_additional_image_sizes['post-thumbnail']['height'] );
+                $mode = $_wp_additional_image_sizes['post-thumbnail']['crop'] ? 'crop' : '';
     		    // check fo cached picture
-    		    if ( ($ngg_options['imgCacheSinglePic']) )
-    		        $img_src = $image->cached_singlepic_file( $width, $height, 'crop' );                
+   		        $img_src = $image->cached_singlepic_file( $width, $height, $mode );                
             }
 
 		    // if we didn't use a cached image then we take the on-the-fly mode 
 		    if ( $img_src == false ) 
-		        $img_src = home_url() . '/' . 'index.php?callback=image&amp;pid=' . $image->pid . '&amp;width=' . $width . '&amp;height=' . $height . '&amp;mode=crop';
+		        $img_src = trailingslashit( home_url() ) . 'index.php?callback=image&amp;pid=' . $image->pid . '&amp;width=' . $width . '&amp;height=' . $height . '&amp;mode=crop';
 			
             $thumbnail_html = '<img width="266" src="'. $img_src . '" alt="'.$image->alttext.'" title="'.$image->alttext.'" />';
             

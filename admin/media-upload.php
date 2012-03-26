@@ -208,14 +208,14 @@ function media_upload_nextgen_form($errors) {
 			  <div class='filename'></div>
 			  <a class='toggle describe-toggle-on' href='#'><?php esc_attr( _e('Show', "nggallery") ); ?></a>
 			  <a class='toggle describe-toggle-off' href='#'><?php esc_attr( _e('Hide', "nggallery") );?></a>
-			  <div class='filename new'><?php echo ( empty($picture->alttext) ) ? wp_html_excerpt($picture->filename,60): stripslashes( wp_html_excerpt($picture->alttext,60) ); ?></div>
+			  <div class='filename new'><?php echo ( empty($picture->alttext) ) ? wp_html_excerpt( esc_html( $picture->filename ),60) : stripslashes( wp_html_excerpt( esc_html( $picture->alttext ),60) ); ?></div>
 			  <table class='slidetoggle describe startclosed'><tbody>
 				  <tr>
 					<td rowspan='4'><img class='thumbnail' alt='<?php echo esc_attr( $picture->alttext ); ?>' src='<?php echo esc_attr( $picture->thumbURL ); ?>'/></td>
-					<td><?php esc_attr( _e('Image ID:', "nggallery") ); ?><?php echo $picid ?></td>
+					<td><?php esc_html( _e('Image ID:', "nggallery") ); ?><?php echo $picid ?></td>
 				  </tr>
-				  <tr><td><?php echo esc_attr( $picture->filename ); ?></td></tr>
-				  <tr><td><?php echo esc_attr( stripslashes($picture->alttext) ); ?></td></tr>
+				  <tr><td><?php echo esc_html( $picture->filename ); ?></td></tr>
+				  <tr><td><?php echo esc_html( stripslashes($picture->alttext) ); ?></td></tr>
 				  <tr><td>&nbsp;</td></tr>
 				  <tr>
 					<td class="label"><label for="image[<?php echo $picid ?>][alttext]"><?php esc_attr_e('Alt/Title text', "nggallery") ;?></label></td>
@@ -252,8 +252,8 @@ function media_upload_nextgen_form($errors) {
 					</tr>
 				   <tr class="submit">
 						<td>
-							<input type="hidden"  name="image[<?php echo $picid ?>][thumb]" value="<?php echo $picture->thumbURL ?>" />
-							<input type="hidden"  name="image[<?php echo $picid ?>][url]" value="<?php echo $picture->imageURL ?>" />
+							<input type="hidden" name="image[<?php echo $picid ?>][thumb]" value="<?php echo esc_attr( $picture->thumbURL ); ?>" />
+							<input type="hidden" name="image[<?php echo $picid ?>][url]" value="<?php echo esc_attr( $picture->imageURL ); ?>" />
 						</td>
 						<td class="savesend">
 							<?php

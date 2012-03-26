@@ -5,9 +5,6 @@
  * @package NextGEN-Gallery
  * @subpackage Administration
  */
-
-define('WP_ADMIN', true);
-
 // look up for the path
 require_once( dirname( dirname(__FILE__) ) . '/ngg-config.php');
 

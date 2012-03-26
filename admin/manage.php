@@ -23,7 +23,7 @@ class nggManageGallery {
         // Check for pagination request, avoid post process of other submit button, exclude search results
         if ( isset($_POST['post_paged']) && !isset($_GET['s'] ) ) {
             if ( $_GET['paged'] != $_POST['post_paged'] ) {		
-                $_GET['paged'] = $_POST['post_paged'];		
+                $_GET['paged'] = absint( $_POST['post_paged'] );		
                 return;		
             }		
         }                        
@@ -75,14 +75,15 @@ class nggManageGallery {
 				if ($ngg->options['deleteImg']) {
 					@unlink($image->imagePath);
 					@unlink($image->thumbPath);	
-					@unlink($image->imagePath . "_backup" );
+					@unlink($image->imagePath . '_backup' );
 				} 
-				$delete_pic = nggdb::delete_image ( $this->pid );
+				do_action('ngg_delete_picture', $this->pid);
+                $result = nggdb::delete_image ( $this->pid );
             }
                                 
-			if($delete_pic)
+			if ($result)
 				nggGallery::show_message( __('Picture','nggallery').' \''.$this->pid.'\' '.__('deleted successfully','nggallery') );
-				
+            
 		 	$this->mode = 'edit'; // show pictures
 	
 		}
@@ -167,12 +168,13 @@ class nggManageGallery {
                						@rmdir( WINABSPATH . $gallery->path );
                 				}
                 			}
-                	
+                            do_action('ngg_delete_gallery', $id);                	
                 			$deleted = nggdb::delete_gallery( $id );
   						}
                         
 						if($deleted)
-							nggGallery::show_message(__('Gallery deleted successfully ', 'nggallery'));
+                            nggGallery::show_message(__('Gallery deleted successfully ', 'nggallery'));
+							
 					}
 					break;
 			}
@@ -190,6 +192,8 @@ class nggManageGallery {
 			$newgallery = esc_attr( $_POST['galleryname']);
 			if ( !empty($newgallery) )
 				nggAdmin::create_gallery($newgallery, $defaultpath);
+            
+            do_action( 'ngg_update_addgallery_page' );
 		}
 
 		if (isset ($_POST['TB_bulkaction']) && isset ($_POST['TB_ResizeImages']))  {
@@ -214,7 +218,7 @@ class nggManageGallery {
 			//save the new values for the next operation
 			$ngg->options['thumbwidth']  = (int)  $_POST['thumbwidth'];
 			$ngg->options['thumbheight'] = (int)  $_POST['thumbheight'];
-			$ngg->options['thumbfix']    = (bool) $_POST['thumbfix']; 
+			$ngg->options['thumbfix']    = isset ($_POST['thumbfix']) ? true : false; 
 			// What is in the case the user has no if cap 'NextGEN Change options' ? Check feedback
 			update_option('ngg_options', $ngg->options);
 			
@@ -258,6 +262,7 @@ class nggManageGallery {
 									@unlink($image->thumbPath);
 									@unlink($image->imagePath."_backup");	
 								} 
+                                do_action('ngg_delete_picture', $image->pid);
 								$delete_pic = nggdb::delete_image( $image->pid );
 							}
 						}
@@ -431,6 +436,8 @@ class nggManageGallery {
 				wp_cache_delete($this->gid, 'ngg_gallery');
                 nggGallery::show_message( __('New gallery page ID','nggallery'). ' ' . $gallery_pageid . ' -> <strong>' . $gallery_title . '</strong> ' .__('created','nggallery') );
 			}
+            
+            do_action('ngg_gallery_addnewpage', $this->gid);
 		}
 	}
     
