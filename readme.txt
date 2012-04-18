@@ -1,3 +1,22 @@
+=== MODIFIED NextGEN Gallery ===
+
+
+  THIS IS A MODIFIED VERSION
+  This version adds a year field
+  to each image in the gallery.
+
+  Nothing else spectacular yet.
+
+
+=================================
+
+
+
+
+
+
+
+
 === NextGEN Gallery ===
 Contributors: alexrabe
 Donate link: http://alexrabe.de/donation/
