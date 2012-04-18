@@ -475,6 +475,13 @@ if($picturelist) {
 						</td>
 						<?php						
 					break;
+					case 'year' :
+						?>
+						<td <?php echo $attributes ?>>
+							<input name="year[<?php echo $pid ?>]" type="text" style="width:95%; margin-bottom: 2px;" value="<?php echo stripslashes($picture->year) ?>" />
+						</td>
+						<?php						
+					break;
 					case 'exclude' :
 						?>
 						<td <?php echo $attributes ?>><input name="exclude[<?php echo $pid ?>]" type="checkbox" value="1" <?php echo $exclude ?> /></td>
@@ -696,6 +703,7 @@ class _NGG_Images_List_Table extends WP_List_Table {
     	$columns['alt_title_desc'] = __('Alt &amp; Title Text', 'nggallery') . ' / ' . __('Description', 'nggallery');
     	$columns['tags'] = __('Tags (comma separated list)', 'nggallery');
     	$columns['exclude'] = __('exclude', 'nggallery');
+    	$columns['year'] = __('year', 'nggallery');
     	
     	$columns = apply_filters('ngg_manage_images_columns', $columns);
     
