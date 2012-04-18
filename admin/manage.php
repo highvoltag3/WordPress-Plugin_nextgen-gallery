@@ -483,6 +483,7 @@ class nggManageGallery {
 		
 		$description = 	isset ( $_POST['description'] ) ? $_POST['description'] : array();
 		$alttext = 		isset ( $_POST['alttext'] ) ? $_POST['alttext'] : array();
+		$year = 		isset ( $_POST['year'] ) ? $_POST['year'] : false();
 		$exclude = 		isset ( $_POST['exclude'] ) ? $_POST['exclude'] : false;
 		$taglist = 		isset ( $_POST['tags'] ) ? $_POST['tags'] : false;
 		$pictures = 	isset ( $_POST['pid'] ) ? $_POST['pid'] : false;
@@ -500,6 +501,11 @@ class nggManageGallery {
                         $image->image_slug = nggdb::get_unique_slug( sanitize_title( $image->alttext ), 'image', $image->pid );                        
                     }
                     
+                    if ( $image->year != $year[$image->pid] ) {
+                        $image->year = $year[$image->pid];
+                        $image->image_slug = nggdb::get_unique_slug( sanitize_title( $image->year ), 'image', $image->pid );                        
+                    }
+                    
                     // set exclude flag
                     if ( is_array($exclude) )
     					$image->exclude = ( array_key_exists($image->pid, $exclude) )? 1 : 0;
@@ -507,8 +513,7 @@ class nggManageGallery {
     					$image->exclude = 0;
                         
                     // update the database
-                    $wpdb->query( $wpdb->prepare ("UPDATE $wpdb->nggpictures SET image_slug = '%s', alttext = '%s', description = '%s', exclude = %d WHERE pid = %d", 
-                                                                                 $image->image_slug, $image->alttext, $image->description, $image->exclude, $image->pid) );    
+                    $wpdb->query( $wpdb->prepare ("UPDATE $wpdb->nggpictures SET image_slug = '%s', alttext = '%s', year = '%s', description = '%s', exclude = %d WHERE pid = %d", $image->image_slug, $image->alttext, $image->year, $image->description, $image->exclude, $image->pid) );    
                     // remove from cache    
                     wp_cache_delete($image->pid, 'ngg_image');
                     
