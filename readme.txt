@@ -252,7 +252,7 @@ To show the most recent added mages : **[recent max=x ]**
 * Changed : Introduce jQuery dialog as new UI element
 * Changed : Call TinyMCE window via admin-ajax
 * Bugfix : Better support for SSL blogs
-* Bugfix : Install/Upgrade failed when table prefix contain captial letters
+* Bugfix : Install/Upgrade failed when table prefix contain capital letters
 * Bugfix : Fix validation issues in Media-RSS
 * Bugfix : Empty tags in XMP Meta causes PHP error
 * Bugfix : Rework load mechanism for slideshow
